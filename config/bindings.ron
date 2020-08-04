@@ -1,0 +1,11 @@
+(
+    axes: {
+        "horizontal": Emulated(
+            pos: Key(A),
+            neg: Key(D),
+        ),
+    },
+    actions: {
+        "rotate": [[Key(W)]],
+    },
+)
