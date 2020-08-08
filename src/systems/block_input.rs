@@ -45,8 +45,10 @@ impl<'s> System<'s> for BlockInputSystem {
                 movement = 0.0;
             }
 
-            let mut new_position = *position;
-            new_position.col += if movement > 0.0 { -1 } else { 1 };
+            let new_position = Position {
+                row: position.row,
+                col: position.col - movement as i8,
+            };
 
             let mut new_block = Block {
                 block_type: block.block_type,
