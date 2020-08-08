@@ -45,14 +45,10 @@ impl<'s> System<'s> for LineDestroySystem {
             let mut dead_pos_by_row = HashMap::new();
             for (entity, _, dead_position) in (&*entities, &mut dead_blocks, &mut positions).join()
             {
-                match dead_pos_by_row.entry(dead_position.row) {
-                    Entry::Vacant(e) => {
-                        e.insert(vec![(entity, dead_position)]);
-                    }
-                    Entry::Occupied(mut e) => {
-                        e.get_mut().push((entity, dead_position));
-                    }
-                }
+                dead_pos_by_row
+                    .entry(dead_position.row)
+                    .or_insert_with(Vec::new)
+                    .push((entity, dead_position));
             }
 
             let mut rows_to_descend: HashMap<i8, i8> = HashMap::new();
