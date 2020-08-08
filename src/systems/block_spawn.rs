@@ -37,7 +37,6 @@ impl<'s> System<'s> for BlockSpawnSystem {
             .get_or_insert_with(|| land_channel.register_reader());
 
         for event in land_channel.read(reader_id) {
-            println!("Received an event: {:?}", event);
             let mut b = Block::new(rand::random());
             b.rotation = 0;
             entities

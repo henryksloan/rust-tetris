@@ -41,7 +41,7 @@ impl<'s> System<'s> for LineDestroySystem {
             .reader_id
             .get_or_insert_with(|| land_channel.register_reader());
 
-        for _ in land_channel.read(reader_id) {
+        for a in land_channel.read(reader_id) {
             let mut dead_pos_by_row = HashMap::new();
             for (entity, _, dead_position) in (&*entities, &mut dead_blocks, &mut positions).join()
             {
