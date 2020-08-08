@@ -63,22 +63,17 @@ impl<'s> System<'s> for BlockInputSystem {
             }
 
             if rotated {
-                println!("Rotate");
                 new_block.rotate_left();
             } else if movement == 0.0 {
                 continue;
             }
 
-            for self_pos in block.get_filled_positions(&new_position) {
-                if self_pos.col < 0 || self_pos.col >= BOARD_WIDTH as i8 {
+            for self_pos in new_block.get_filled_positions(&new_position) {
+                let outside_bounds =
+                    || self_pos.col < 0 || self_pos.col >= BOARD_WIDTH as i8 || self_pos.row < 0;
+                let in_dead = || dead_positions.iter().any(|dead_pos| self_pos == *dead_pos);
+                if outside_bounds() || in_dead() {
                     continue 'block_loop;
-                }
-
-                for other_pos in &dead_positions {
-                    if self_pos == *other_pos {
-                        println!("Moved into dead");
-                        continue 'block_loop;
-                    }
                 }
             }
 
