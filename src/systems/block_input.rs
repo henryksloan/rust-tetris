@@ -38,6 +38,38 @@ impl BlockInputSystem {
 
         action
     }
+
+    fn position_collides(
+        block: &Block,
+        position: &Position,
+        dead_positions: &Vec<Position>,
+    ) -> bool {
+        for self_pos in block.get_filled_positions(&position) {
+            let outside_bounds =
+                || self_pos.col < 0 || self_pos.col >= BOARD_WIDTH as i8 || self_pos.row < 0;
+            let in_dead = || dead_positions.iter().any(|dead_pos| self_pos == *dead_pos);
+            if outside_bounds() || in_dead() {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    fn hard_drop(block: &Block, position: &mut Position, dead_positions: &Vec<Position>) {
+        let down_collides = |pos: &Position| {
+            let down_pos = Position {
+                row: pos.row - 1,
+                col: pos.col,
+            };
+
+            Self::position_collides(block, &down_pos, dead_positions)
+        };
+
+        while !down_collides(position) {
+            position.row -= 1;
+        }
+    }
 }
 
 impl<'s> System<'s> for BlockInputSystem {
@@ -59,6 +91,10 @@ impl<'s> System<'s> for BlockInputSystem {
             .collect::<Vec<_>>();
 
         'block_loop: for (block, position) in (&mut blocks, &mut positions).join() {
+            if self.action_no_spam(&*input, &"hard_drop".to_string()) {
+                Self::hard_drop(block, position, &dead_positions);
+            }
+
             let mut movement = input.axis_value("horizontal").unwrap_or(0.0);
             let same_movement = (self.last_movement > 0.0 && movement > 0.0)
                 || (self.last_movement < 0.0 && movement < 0.0);
@@ -68,10 +104,10 @@ impl<'s> System<'s> for BlockInputSystem {
                 movement = 0.0;
             }
 
-            let descend = self.action_no_spam(&*input, &"descend".to_string());
+            let soft_drop = self.action_no_spam(&*input, &"soft_drop".to_string());
 
             let new_position = Position {
-                row: position.row - descend as i8,
+                row: position.row - soft_drop as i8,
                 col: position.col - movement as i8,
             };
 
@@ -83,17 +119,12 @@ impl<'s> System<'s> for BlockInputSystem {
             let rotated = self.action_no_spam(&*input, &"rotate".to_string());
             if rotated {
                 new_block.rotate_left();
-            } else if movement == 0.0 && !descend {
+            } else if movement == 0.0 && !soft_drop {
                 continue;
             }
 
-            for self_pos in new_block.get_filled_positions(&new_position) {
-                let outside_bounds =
-                    || self_pos.col < 0 || self_pos.col >= BOARD_WIDTH as i8 || self_pos.row < 0;
-                let in_dead = || dead_positions.iter().any(|dead_pos| self_pos == *dead_pos);
-                if outside_bounds() || in_dead() {
-                    continue 'block_loop;
-                }
+            if Self::position_collides(&new_block, &new_position, &dead_positions) {
+                continue 'block_loop;
             }
 
             if position.row != new_position.row {
