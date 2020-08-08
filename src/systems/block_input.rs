@@ -37,12 +37,9 @@ impl<'s> System<'s> for BlockInputSystem {
 
         'block_loop: for (block, position) in (&mut blocks, &mut positions).join() {
             let mut movement = input.axis_value("horizontal").unwrap_or(0.0);
-            let mut same_movement = false;
-            if (self.last_movement > 0.0 && movement > 0.0)
-                || (self.last_movement < 0.0 && movement < 0.0)
-            {
-                same_movement = true;
-            }
+            let same_movement = (self.last_movement > 0.0 && movement > 0.0)
+                || (self.last_movement < 0.0 && movement < 0.0);
+
             self.last_movement = movement;
             if same_movement {
                 movement = 0.0;

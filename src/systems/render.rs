@@ -1,7 +1,8 @@
 use crate::entities::{Block, DeadBlock, Position};
 
+use amethyst::renderer::palette::Srgba;
 use amethyst::{
-    core::math::Point2,
+    core::math::{Point2, Point3},
     derive::SystemDesc,
     ecs::prelude::{Join, ReadStorage, System, SystemData, WriteStorage},
     renderer::debug_drawing::DebugLinesComponent,
@@ -9,6 +10,32 @@ use amethyst::{
 
 #[derive(SystemDesc)]
 pub struct RenderSystem;
+
+impl RenderSystem {
+    fn draw_crossed_square(
+        &self,
+        debug_line: &mut DebugLinesComponent,
+        position: &Position,
+        color: Srgba,
+    ) {
+        debug_line.add_rectangle_2d(
+            Point2::new(position.col as f32, position.row as f32),
+            Point2::new((position.col + 1) as f32, (position.row + 1) as f32),
+            0.0,
+            color,
+        );
+        debug_line.add_line(
+            Point3::new(position.col as f32, position.row as f32, 0.0),
+            Point3::new((position.col + 1) as f32, (position.row + 1) as f32, 0.0),
+            color,
+        );
+        debug_line.add_line(
+            Point3::new(position.col as f32, (position.row + 1) as f32, 0.0),
+            Point3::new((position.col + 1) as f32, position.row as f32, 0.0),
+            color,
+        );
+    }
+}
 
 impl<'s> System<'s> for RenderSystem {
     type SystemData = (
@@ -24,29 +51,16 @@ impl<'s> System<'s> for RenderSystem {
         }
 
         for (block, position) in (&blocks, &positions).join() {
-            // println!("col:row {}:{}", position.col as f32, position.row as f32);
-
             for debug_line in (&mut debug_lines).join() {
                 for self_pos in block.get_filled_positions(position) {
-                    debug_line.add_rectangle_2d(
-                        Point2::new(self_pos.col as f32, self_pos.row as f32),
-                        Point2::new((self_pos.col + 1) as f32, (self_pos.row + 1) as f32),
-                        0.0,
-                        block.block_type.get_color(),
-                    );
+                    self.draw_crossed_square(debug_line, &self_pos, block.block_type.get_color());
                 }
             }
         }
 
         for (block, position) in (&dead_blocks, &positions).join() {
-            // println!("C");
             for debug_line in (&mut debug_lines).join() {
-                debug_line.add_rectangle_2d(
-                    Point2::new(position.col as f32, position.row as f32),
-                    Point2::new((position.col + 1) as f32, (position.row + 1) as f32),
-                    0.0,
-                    block.block_type.get_color(),
-                );
+                self.draw_crossed_square(debug_line, position, block.block_type.get_color());
             }
         }
     }

@@ -13,6 +13,8 @@ use crate::{
     events::BlockLandEvent,
 };
 
+const FALL_TIMER: f32 = 0.4;
+
 #[derive(SystemDesc)]
 pub struct BlockFallSystem {
     fall_timer: f32, // Seconds until next step down
@@ -20,7 +22,9 @@ pub struct BlockFallSystem {
 
 impl BlockFallSystem {
     pub fn new() -> Self {
-        Self { fall_timer: 0.6 }
+        Self {
+            fall_timer: FALL_TIMER,
+        }
     }
 }
 
@@ -41,7 +45,7 @@ impl<'s> System<'s> for BlockFallSystem {
         self.fall_timer -= time.delta_seconds();
 
         if self.fall_timer <= 0.0 {
-            self.fall_timer = 0.6; // TODO: Make this change over time and centralize it to a variable
+            self.fall_timer = FALL_TIMER; // TODO: Make this change over time and centralize it to a variable
 
             let dead_positions = (&mut dead_blocks, &mut positions)
                 .join()
