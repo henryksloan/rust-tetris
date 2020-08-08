@@ -46,13 +46,13 @@ fn main() -> amethyst::Result<()> {
         .with_bundle(
             InputBundle::<StringBindings>::new().with_bindings_from_file(key_bindings_path)?,
         )?
-        .with(BlockFallSystem::new(), "block_fall_system", &[])
-        .with(BlockSpawnSystem::new(), "block_spawn_system", &[])
         .with(
             BlockInputSystem::new(),
             "block_input_system",
             &["input_system"],
         )
+        .with(BlockFallSystem::new(), "block_fall_system", &[])
+        .with(BlockSpawnSystem::new(), "block_spawn_system", &[])
         .with(LineDestroySystem::new(), "line_destroy_system", &[])
         .with(RenderSystem, "render_system", &[]);
 

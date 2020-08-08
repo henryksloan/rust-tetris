@@ -1,10 +1,14 @@
 use amethyst::{
     derive::SystemDesc,
-    ecs::prelude::{Join, Read, System, SystemData, WriteStorage},
+    ecs::prelude::{Join, Read, System, SystemData, Write, WriteStorage},
     input::{InputHandler, StringBindings},
+    shrev::EventChannel,
 };
 
-use crate::entities::{Block, DeadBlock, Position, BOARD_WIDTH};
+use crate::{
+    entities::{Block, DeadBlock, Position, BOARD_WIDTH},
+    events::ResetFallTimerEvent,
+};
 use std::collections::HashSet;
 
 #[derive(SystemDesc)]
@@ -42,9 +46,13 @@ impl<'s> System<'s> for BlockInputSystem {
         WriteStorage<'s, DeadBlock>,
         WriteStorage<'s, Position>,
         Read<'s, InputHandler<StringBindings>>,
+        Write<'s, EventChannel<ResetFallTimerEvent>>,
     );
 
-    fn run(&mut self, (mut blocks, mut dead_blocks, mut positions, input): Self::SystemData) {
+    fn run(
+        &mut self,
+        (mut blocks, mut dead_blocks, mut positions, input, mut reset_channel): Self::SystemData,
+    ) {
         let dead_positions = (&mut dead_blocks, &mut positions)
             .join()
             .map(|(_, pos)| *pos)
@@ -86,6 +94,10 @@ impl<'s> System<'s> for BlockInputSystem {
                 if outside_bounds() || in_dead() {
                     continue 'block_loop;
                 }
+            }
+
+            if position.row != new_position.row {
+                reset_channel.single_write(ResetFallTimerEvent {});
             }
 
             position.row = new_position.row;
