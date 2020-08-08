@@ -7,5 +7,6 @@
     },
     actions: {
         "rotate": [[Key(W)]],
+        "descend": [[Key(S)]],
     },
 )

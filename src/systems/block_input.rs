@@ -5,19 +5,34 @@ use amethyst::{
 };
 
 use crate::entities::{Block, DeadBlock, Position, BOARD_WIDTH};
+use std::collections::HashSet;
 
 #[derive(SystemDesc)]
 pub struct BlockInputSystem {
     last_movement: f32,
-    rotated_last: bool,
+    last_actions: HashSet<String>,
 }
 
 impl BlockInputSystem {
     pub fn new() -> Self {
         Self {
             last_movement: 0.0,
-            rotated_last: false,
+            last_actions: HashSet::new(),
         }
+    }
+
+    fn action_no_spam(&mut self, input: &InputHandler<StringBindings>, name: &String) -> bool {
+        let contains = self.last_actions.contains(name);
+        let action = input.action_is_down(name).unwrap_or(false);
+        if contains && !action {
+            self.last_actions.remove(name);
+        } else if !contains && action {
+            self.last_actions.insert(String::from(name));
+        } else if contains && action {
+            return false;
+        }
+
+        action
     }
 }
 
@@ -45,8 +60,10 @@ impl<'s> System<'s> for BlockInputSystem {
                 movement = 0.0;
             }
 
+            let descend = self.action_no_spam(&*input, &"descend".to_string());
+
             let new_position = Position {
-                row: position.row,
+                row: position.row - descend as i8,
                 col: position.col - movement as i8,
             };
 
@@ -55,18 +72,10 @@ impl<'s> System<'s> for BlockInputSystem {
                 rotation: block.rotation,
             };
 
-            let mut rotated = input.action_is_down("rotate").unwrap_or(false);
-            if self.rotated_last && !rotated {
-                self.rotated_last = false;
-            } else if !self.rotated_last && rotated {
-                self.rotated_last = true;
-            } else if self.rotated_last && rotated {
-                rotated = false;
-            }
-
+            let rotated = self.action_no_spam(&*input, &"rotate".to_string());
             if rotated {
                 new_block.rotate_left();
-            } else if movement == 0.0 {
+            } else if movement == 0.0 && !descend {
                 continue;
             }
 
@@ -79,6 +88,7 @@ impl<'s> System<'s> for BlockInputSystem {
                 }
             }
 
+            position.row = new_position.row;
             position.col = new_position.col;
             block.rotation = new_block.rotation;
         }
