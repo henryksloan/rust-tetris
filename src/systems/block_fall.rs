@@ -49,7 +49,7 @@ impl<'s> System<'s> for BlockFallSystem {
 
             let dead_positions = (&mut dead_blocks, &mut positions)
                 .join()
-                .map(|(_, pos)| pos.clone())
+                .map(|(_, pos)| *pos)
                 .collect::<Vec<_>>();
 
             let mut new_dead_blocks = Vec::<(DeadBlock, Position)>::new();
@@ -76,8 +76,7 @@ impl<'s> System<'s> for BlockFallSystem {
 
                 if collide {
                     for new_dead_pos in block.get_filled_positions(position) {
-                        new_dead_blocks
-                            .push((DeadBlock::new(block.block_type), new_dead_pos.clone()));
+                        new_dead_blocks.push((DeadBlock::new(block.block_type), new_dead_pos));
                     }
                     entities.delete(entity).unwrap();
 

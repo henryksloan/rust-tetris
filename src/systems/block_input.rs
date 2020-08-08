@@ -32,7 +32,7 @@ impl<'s> System<'s> for BlockInputSystem {
     fn run(&mut self, (mut blocks, mut dead_blocks, mut positions, input): Self::SystemData) {
         let dead_positions = (&mut dead_blocks, &mut positions)
             .join()
-            .map(|(_, pos)| pos.clone())
+            .map(|(_, pos)| *pos)
             .collect::<Vec<_>>();
 
         'block_loop: for (block, position) in (&mut blocks, &mut positions).join() {
@@ -45,7 +45,7 @@ impl<'s> System<'s> for BlockInputSystem {
                 movement = 0.0;
             }
 
-            let mut new_position = position.clone();
+            let mut new_position = *position;
             new_position.col += if movement > 0.0 { -1 } else { 1 };
 
             let mut new_block = Block {
