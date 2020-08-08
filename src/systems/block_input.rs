@@ -25,7 +25,7 @@ impl BlockInputSystem {
         }
     }
 
-    fn action_no_spam(&mut self, input: &InputHandler<StringBindings>, name: &String) -> bool {
+    fn action_no_spam(&mut self, input: &InputHandler<StringBindings>, name: &str) -> bool {
         let contains = self.last_actions.contains(name);
         let action = input.action_is_down(name).unwrap_or(false);
         if contains && !action {
@@ -39,11 +39,7 @@ impl BlockInputSystem {
         action
     }
 
-    fn position_collides(
-        block: &Block,
-        position: &Position,
-        dead_positions: &Vec<Position>,
-    ) -> bool {
+    fn position_collides(block: &Block, position: &Position, dead_positions: &[Position]) -> bool {
         for self_pos in block.get_filled_positions(&position) {
             let outside_bounds =
                 || self_pos.col < 0 || self_pos.col >= BOARD_WIDTH as i8 || self_pos.row < 0;
@@ -56,7 +52,7 @@ impl BlockInputSystem {
         false
     }
 
-    fn hard_drop(block: &Block, position: &mut Position, dead_positions: &Vec<Position>) {
+    fn hard_drop(block: &Block, position: &mut Position, dead_positions: &[Position]) {
         let down_collides = |pos: &Position| {
             let down_pos = Position {
                 row: pos.row - 1,
