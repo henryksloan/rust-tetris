@@ -32,7 +32,7 @@ impl<'s> System<'s> for BlockInputSystem {
     fn run(&mut self, (mut blocks, mut dead_blocks, mut positions, input): Self::SystemData) {
         let dead_positions = (&mut dead_blocks, &mut positions)
             .join()
-            .map(|(_, pos)| pos.clone())
+            .map(|(_, pos)| *pos)
             .collect::<Vec<_>>();
 
         'block_loop: for (block, position) in (&mut blocks, &mut positions).join() {
@@ -45,7 +45,7 @@ impl<'s> System<'s> for BlockInputSystem {
                 movement = 0.0;
             }
 
-            let mut new_position = position.clone();
+            let mut new_position = *position;
             new_position.col += if movement > 0.0 { -1 } else { 1 };
 
             let mut new_block = Block {
@@ -63,22 +63,17 @@ impl<'s> System<'s> for BlockInputSystem {
             }
 
             if rotated {
-                println!("Rotate");
                 new_block.rotate_left();
             } else if movement == 0.0 {
                 continue;
             }
 
-            for self_pos in block.get_filled_positions(&new_position) {
-                if self_pos.col < 0 || self_pos.col >= BOARD_WIDTH as i8 {
+            for self_pos in new_block.get_filled_positions(&new_position) {
+                let outside_bounds =
+                    || self_pos.col < 0 || self_pos.col >= BOARD_WIDTH as i8 || self_pos.row < 0;
+                let in_dead = || dead_positions.iter().any(|dead_pos| self_pos == *dead_pos);
+                if outside_bounds() || in_dead() {
                     continue 'block_loop;
-                }
-
-                for other_pos in &dead_positions {
-                    if self_pos == *other_pos {
-                        println!("Moved into dead");
-                        continue 'block_loop;
-                    }
                 }
             }
 

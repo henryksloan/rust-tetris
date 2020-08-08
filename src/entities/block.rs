@@ -28,13 +28,11 @@ impl Block {
     }
 
     pub fn get_filled_positions(&self, pos: &Position) -> Vec<Position> {
-        // println!("A");
         let mut positions = Vec::new();
         let shape: BlockShape = self.block_type.get_shape(self.rotation);
         for row in 0..4 {
             for col in 0..4 {
                 if (shape & (1 << (row * 4 + col))) != 0 {
-                    // println!("true row:col {}:{}", pos.row + (3 - row), pos.col + col);
                     positions.push(Position {
                         row: pos.row + (3 - row),
                         col: pos.col + col,

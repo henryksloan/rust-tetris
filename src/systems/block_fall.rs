@@ -49,42 +49,34 @@ impl<'s> System<'s> for BlockFallSystem {
 
             let dead_positions = (&mut dead_blocks, &mut positions)
                 .join()
-                .map(|(_, pos)| pos.clone())
+                .map(|(_, pos)| *pos)
                 .collect::<Vec<_>>();
 
             let mut new_dead_blocks = Vec::<(DeadBlock, Position)>::new();
             for (entity, block, position) in (&*entities, &blocks, &mut positions).join() {
-                // TODO: First, check if moving it down would make it hit an immovable
-                // If so, don't move and turn the block into several `DeadBlock`s
                 let mut collide = false;
 
                 'self_loop: for self_pos in block.get_filled_positions(position) {
-                    // println!("Hey col:row {}:{}", self_pos.col, self_pos.row);
                     if self_pos.row == 0 {
-                        println!("Collided with row==0");
                         collide = true;
                         break;
                     }
 
                     for other_pos in &dead_positions {
-                        let mut pos_below_self = self_pos;
-                        pos_below_self.row -= 1;
+                        let pos_below_self = Position {
+                            row: self_pos.row - 1,
+                            col: self_pos.col,
+                        };
                         if pos_below_self == *other_pos {
-                            println!("Collided with dead");
                             collide = true;
                             break 'self_loop;
                         }
                     }
                 }
 
-                // TODO: At 12:38 AM, 7/21/20, I figured out the crash
-                // The implementation of blocks is always 4x4, but it doesn't really start at the bottom of the 4x4
-                // So it tries to go under the screen before the actual squares in the tetromino reach row 0
-
                 if collide {
                     for new_dead_pos in block.get_filled_positions(position) {
-                        new_dead_blocks
-                            .push((DeadBlock::new(block.block_type), new_dead_pos.clone()));
+                        new_dead_blocks.push((DeadBlock::new(block.block_type), new_dead_pos));
                     }
                     entities.delete(entity).unwrap();
 
