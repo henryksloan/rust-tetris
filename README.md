@@ -1,5 +1,7 @@
 # rust-tetris
-Tetris in Rust using the Amethyst Library
+Tetris clone in Rust using the Amethyst Library
+
+![Game screenshot](screenshots/game.png)
 
 ## Running
 
