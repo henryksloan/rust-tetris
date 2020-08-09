@@ -2,7 +2,7 @@ use amethyst::{
     core::Time,
     derive::SystemDesc,
     ecs::{
-        prelude::{Join, Read, ReadStorage, System, SystemData, Write, WriteStorage},
+        prelude::{Join, Read, ReadStorage, ReaderId, System, SystemData, Write, WriteStorage},
         Entities,
     },
     shrev::EventChannel,
@@ -10,7 +10,7 @@ use amethyst::{
 
 use crate::{
     entities::{Block, DeadBlock, Position},
-    events::BlockLandEvent,
+    events::{BlockLandEvent, ResetFallTimerEvent},
 };
 
 const FALL_TIMER: f32 = 0.4;
@@ -18,12 +18,14 @@ const FALL_TIMER: f32 = 0.4;
 #[derive(SystemDesc)]
 pub struct BlockFallSystem {
     fall_timer: f32, // Seconds until next step down
+    reader_id: Option<ReaderId<ResetFallTimerEvent>>,
 }
 
 impl BlockFallSystem {
     pub fn new() -> Self {
         Self {
             fall_timer: FALL_TIMER,
+            reader_id: None,
         }
     }
 }
@@ -36,12 +38,29 @@ impl<'s> System<'s> for BlockFallSystem {
         Read<'s, Time>,
         Entities<'s>,
         Write<'s, EventChannel<BlockLandEvent>>,
+        Write<'s, EventChannel<ResetFallTimerEvent>>,
     );
 
     fn run(
         &mut self,
-        (blocks, mut dead_blocks, mut positions, time, entities, mut land_channel): Self::SystemData,
+        (
+            blocks,
+            mut dead_blocks,
+            mut positions,
+            time,
+            entities,
+            mut land_channel,
+            mut reset_channel,
+        ): Self::SystemData,
     ) {
+        let reader_id = self
+            .reader_id
+            .get_or_insert_with(|| reset_channel.register_reader());
+
+        for _ in reset_channel.read(reader_id) {
+            self.fall_timer = FALL_TIMER;
+        }
+
         self.fall_timer -= time.delta_seconds();
 
         if self.fall_timer <= 0.0 {
