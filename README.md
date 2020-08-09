@@ -28,3 +28,10 @@ The game is in a basic playable state, complete with most defining features:
 - Players can move the block left-right and rotate it
 - Players can soft- or hard-drop the block
 - Blocks in a line are destroyed, causing above lines to fall
+
+TODO:
+- Add sprite for single square, and tint it to draw blocks
+- Add loss condition
+- Add score
+- Speed up as game progresses, either with levels or passively
+- Consider adding display of next one or several block types
