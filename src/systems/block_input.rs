@@ -1,4 +1,5 @@
 use amethyst::{
+    core::Time,
     derive::SystemDesc,
     ecs::prelude::{Join, Read, System, SystemData, Write, WriteStorage},
     input::{InputHandler, StringBindings},
@@ -9,19 +10,19 @@ use crate::{
     entities::{Block, DeadBlock, Position, BOARD_WIDTH},
     events::ResetFallTimerEvent,
 };
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 #[derive(SystemDesc)]
 pub struct BlockInputSystem {
-    last_movement: f32,
     last_actions: HashSet<String>,
+    action_timers: HashMap<String, f32>,
 }
 
 impl BlockInputSystem {
     pub fn new() -> Self {
         Self {
-            last_movement: 0.0,
             last_actions: HashSet::new(),
+            action_timers: HashMap::new(),
         }
     }
 
@@ -37,6 +38,33 @@ impl BlockInputSystem {
         }
 
         action
+    }
+
+    fn action_with_timer<T: PartialEq>(
+        &mut self,
+        time: &Time,
+        default_seconds: f32,
+        name: &str,
+        value: T,
+        default_value: T,
+    ) -> T {
+        let timer = self
+            .action_timers
+            .entry(String::from(name))
+            .or_insert(default_seconds);
+
+        if *timer <= 0.0 {
+            if value != default_value {
+                *timer = default_seconds;
+            }
+            value
+        } else if value == default_value {
+            *timer = 0.0;
+            default_value
+        } else {
+            *timer -= time.delta_seconds();
+            default_value
+        }
     }
 
     fn position_collides(block: &Block, position: &Position, dead_positions: &[Position]) -> bool {
@@ -75,11 +103,12 @@ impl<'s> System<'s> for BlockInputSystem {
         WriteStorage<'s, Position>,
         Read<'s, InputHandler<StringBindings>>,
         Write<'s, EventChannel<ResetFallTimerEvent>>,
+        Read<'s, Time>,
     );
 
     fn run(
         &mut self,
-        (mut blocks, mut dead_blocks, mut positions, input, mut reset_channel): Self::SystemData,
+        (mut blocks, mut dead_blocks, mut positions, input, mut reset_channel, time): Self::SystemData,
     ) {
         let dead_positions = (&mut dead_blocks, &mut positions)
             .join()
@@ -91,16 +120,12 @@ impl<'s> System<'s> for BlockInputSystem {
                 Self::hard_drop(block, position, &dead_positions);
             }
 
-            let mut movement = input.axis_value("horizontal").unwrap_or(0.0);
-            let same_movement = (self.last_movement > 0.0 && movement > 0.0)
-                || (self.last_movement < 0.0 && movement < 0.0);
+            let movement_input = input.axis_value("horizontal").unwrap_or(0.0);
+            let movement = self.action_with_timer(&*time, 0.14, "horizontal", movement_input, 0.0);
 
-            self.last_movement = movement;
-            if same_movement {
-                movement = 0.0;
-            }
-
-            let soft_drop = self.action_no_spam(&*input, &"soft_drop".to_string());
+            let soft_drop_input = input.action_is_down("soft_drop").unwrap_or(false);
+            let soft_drop =
+                self.action_with_timer(&*time, 0.14, "soft_drop", soft_drop_input, false);
 
             let new_position = Position {
                 row: position.row - soft_drop as i8,
