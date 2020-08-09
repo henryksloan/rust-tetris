@@ -11,6 +11,7 @@ use crate::{
     entities::{DeadBlock, Position, BOARD_WIDTH},
     events::BlockLandEvent,
 };
+use amethyst::core::Transform;
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 
@@ -29,13 +30,14 @@ impl<'s> System<'s> for LineDestroySystem {
     type SystemData = (
         WriteStorage<'s, DeadBlock>,
         WriteStorage<'s, Position>,
+        WriteStorage<'s, Transform>,
         Entities<'s>,
         Write<'s, EventChannel<BlockLandEvent>>,
     );
 
     fn run(
         &mut self,
-        (mut dead_blocks, mut positions, entities, mut land_channel): Self::SystemData,
+        (mut dead_blocks, mut positions, mut transforms, entities, mut land_channel): Self::SystemData,
     ) {
         let reader_id = self
             .reader_id
@@ -43,12 +45,18 @@ impl<'s> System<'s> for LineDestroySystem {
 
         for _ in land_channel.read(reader_id) {
             let mut dead_pos_by_row = HashMap::new();
-            for (entity, _, dead_position) in (&*entities, &mut dead_blocks, &mut positions).join()
+            for (entity, _, dead_position, dead_transform) in (
+                &*entities,
+                &mut dead_blocks,
+                &mut positions,
+                &mut transforms,
+            )
+                .join()
             {
                 dead_pos_by_row
                     .entry(dead_position.row)
                     .or_insert_with(Vec::new)
-                    .push((entity, dead_position));
+                    .push((entity, dead_position, dead_transform));
             }
 
             let mut rows_to_descend: HashMap<i8, i8> = HashMap::new();
@@ -77,6 +85,9 @@ impl<'s> System<'s> for LineDestroySystem {
                 if let Some(blocks_to_move) = dead_pos_by_row.get_mut(&row_to_descend.0) {
                     for block_to_move in blocks_to_move {
                         block_to_move.1.row -= row_to_descend.1;
+                        block_to_move
+                            .2
+                            .prepend_translation_y(-(row_to_descend.1 as f32));
                     }
                 }
             }

@@ -3,10 +3,14 @@ use crate::{
     events::BlockLandEvent,
 };
 
+use amethyst::renderer::{SpriteSheet, SpriteSheetFormat};
 use amethyst::{
+    assets::{AssetStorage, Loader},
     core::transform::Transform,
     prelude::*,
-    renderer::{camera::Camera, debug_drawing::DebugLinesComponent},
+    renderer::{
+        camera::Camera, debug_drawing::DebugLinesComponent, formats::texture::ImageFormat, Texture,
+    },
     shrev::EventChannel,
 };
 
@@ -17,7 +21,6 @@ impl SimpleState for GameState {
     fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
         let StateData { world, .. } = data;
 
-        // world.insert(Block::new(BlockType::S));
         let mut b = Block::new(BlockType::I);
         b.rotation = 3;
         world
@@ -42,6 +45,28 @@ impl SimpleState for GameState {
             .with(Camera::standard_2d(BOARD_WIDTH as f32, BOARD_HEIGHT as f32))
             .with(transform)
             .build();
+
+        let texture_handle = {
+            let loader = world.read_resource::<Loader>();
+            loader.load(
+                "tetris_block.png",
+                ImageFormat::default(),
+                (),
+                &world.read_resource::<AssetStorage<Texture>>(),
+            )
+        };
+
+        let spritesheet_handle = {
+            let loader = world.read_resource::<Loader>();
+            loader.load(
+                "sprites.ron",
+                SpriteSheetFormat(texture_handle),
+                (),
+                &world.read_resource::<AssetStorage<SpriteSheet>>(),
+            )
+        };
+
+        world.insert(spritesheet_handle);
     }
 
     fn update(&mut self, _data: &mut StateData<'_, GameData<'_, '_>>) -> SimpleTrans {

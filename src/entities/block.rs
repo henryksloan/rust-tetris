@@ -79,13 +79,13 @@ impl BlockType {
 
     pub fn get_color(&self) -> Srgba {
         match *self {
-            BlockType::O => Srgba::new(0.06, 0.9, 0.8, 1.0),
-            BlockType::J => Srgba::new(0.01, 0.0, 0.95, 1.0),
-            BlockType::L => Srgba::new(0.06, 0.6, 0.8, 1.0),
-            BlockType::I => Srgba::new(0.0, 1.0, 1.0, 1.0),
-            BlockType::S => Srgba::new(0.0, 0.12, 0.75, 1.0),
-            BlockType::Z => Srgba::new(0.06, 0.94, 0.19, 1.0),
-            BlockType::T => Srgba::new(0.04, 0.57, 0.06, 1.0),
+            BlockType::O => Srgba::new(0.94, 0.94, 0.0, 1.0),
+            BlockType::J => Srgba::new(0.94, 0.63, 0.0, 1.0),
+            BlockType::L => Srgba::new(0.0, 0.0, 0.94, 1.0),
+            BlockType::I => Srgba::new(0.0, 0.94, 0.94, 1.0),
+            BlockType::S => Srgba::new(0.0, 0.94, 0.0, 1.0),
+            BlockType::Z => Srgba::new(0.94, 0.0, 0.0, 1.0),
+            BlockType::T => Srgba::new(0.64, 0.0, 0.94, 1.0),
         }
     }
 }
