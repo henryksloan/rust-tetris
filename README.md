@@ -1,7 +1,7 @@
 # rust-tetris
 Tetris in Rust using the Amethyst Library
 
-## How to run
+## Running
 
 To run the game, run the following command, which defaults to the `vulkan` graphics backend:
 
@@ -9,14 +9,20 @@ To run the game, run the following command, which defaults to the `vulkan` graph
 cargo run
 ```
 
-Windows and Linux users may explicitly choose `"vulkan"` with the following command:
+You can explicitly choose a graphics backend by adding `--no-default-features --features ["vulkan"/"metal"]`.
 
-```bash
-cargo run --no-default-features --features "vulkan"
-```
+## Controls
 
-Mac OS X users may explicitly choose `"metal"` with the following command:
+`A` and `D` move the block left and right, respectively.
 
-```bash
-cargo run --no-default-features --features "metal"
-```
+`W` rotates the block.
+
+`S` and `Space` soft- and hard-drop the block, respectively.
+
+## Progress
+
+The game is in a basic playable state, complete with most defining features:
+- Blocks spawn and fall
+- Players can move the block left-right and rotate it
+- Players can soft- or hard-drop the block
+- Blocks in a line are destroyed, causing above lines to fall
