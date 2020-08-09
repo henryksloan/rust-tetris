@@ -1,3 +1,4 @@
+![Badge](https://github.com/henryksloan/rust-tetris/workflows/Rust/badge.svg)
 # rust-tetris
 Tetris clone in Rust using the Amethyst Library
 
