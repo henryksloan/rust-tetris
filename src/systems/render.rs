@@ -52,10 +52,8 @@ impl<'s> System<'s> for RenderSystem {
     type SystemData = (
         ReadStorage<'s, Block>,
         WriteStorage<'s, BlockSquare>,
-        ReadStorage<'s, DeadBlock>,
         ReadStorage<'s, Position>,
         WriteStorage<'s, Transform>,
-        WriteStorage<'s, DebugLinesComponent>,
         Entities<'s>,
         WriteStorage<'s, SpriteRender>,
         ReadExpect<'s, Handle<SpriteSheet>>,
@@ -67,20 +65,14 @@ impl<'s> System<'s> for RenderSystem {
         (
             blocks,
             mut block_squares,
-            dead_blocks,
             positions,
             mut transforms,
-            mut debug_lines,
             entities,
             mut sprite_renders,
             sprite_sheet_handle,
             mut tints,
         ): Self::SystemData,
     ) {
-        /* for debug_line in (&mut debug_lines).join() {
-            debug_line.clear();
-        } */
-
         for (_, entity) in (&mut block_squares, &*entities).join() {
             entities.delete(entity).unwrap();
         }
@@ -110,18 +102,6 @@ impl<'s> System<'s> for RenderSystem {
                     .with(tint, &mut tints)
                     .build();
             }
-
-            /* for debug_line in (&mut debug_lines).join() {
-                for self_pos in block.get_filled_positions(position) {
-                    self.draw_crossed_square(debug_line, &self_pos, block.block_type.get_color());
-                }
-            } */
         }
-
-        /* for (block, position) in (&dead_blocks, &positions).join() {
-            for debug_line in (&mut debug_lines).join() {
-                self.draw_crossed_square(debug_line, position, block.block_type.get_color());
-            }
-        } */
     }
 }
